@@ -1,0 +1,6 @@
+dirwhale
+dirwhale.exe
+*.o
+*.obj
+*.json
+test_fixture/
