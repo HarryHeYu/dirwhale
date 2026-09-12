@@ -4,14 +4,14 @@ A tiny, zero-dependency disk usage analyzer written in pure C99.
 Find out what's eating your disk in seconds.
 
 ```
-$ dirwhale -d 1 -n 5 E:/code
-E:/code [17.9 GiB, 203628 files]
-  |- 【持续更新】吴恩达大模型/  (7.81 GiB, 846 files)
-  |- thecodeofc/  (5.07 GiB, 1849 files)
-  |- kernel/  (1.54 GiB, 102893 files)
-  |- linux-6.18.15.tar  (1.50 GiB, 1 file)
-  |- Idea2Paper/  (305 MiB, 208 files)
-  `- ... and 4 more entries (8.68 MiB)
+$ dirwhale -d 1 -n 5 ~/projects
+/home/you/projects [23.4 GiB, 412077 files]
+  |- media/  (12.6 GiB, 3102 files)
+  |- mygame/  (6.02 GiB, 88413 files)
+  |- node_modules/  (1.87 GiB, 288501 files)
+  |- big-export.tar  (1.63 GiB, 1 file)
+  |- notes/  (412 MiB, 3321 files)
+  `- ... and 9 more entries (741 MiB)
 ```
 
 ## Features
