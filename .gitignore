@@ -3,4 +3,7 @@ dirwhale.exe
 *.o
 *.obj
 *.json
+*.pyc
+__pycache__/
 test_fixture/
+_baseline_fix/

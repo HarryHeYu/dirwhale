@@ -16,13 +16,14 @@ $ dirwhale -d 1 -n 5 ~/projects
 
 ## Features
 
-- **Zero dependencies** — single C99 source file, only libc + dirent
-- **Fast** — scans hundreds of thousands of files without breaking a sweat
+- **Zero dependencies** — single C99 source file; libc on POSIX, Win32 file APIs on Windows
+- **Fast and light** — one directory-listing syscall per folder (no extra stat per file on Windows); keeps only the displayed top-N tree in memory unless you ask for JSON
 - **Human-readable sizes** — B / KiB / MiB / GiB / TiB, auto-scaled
 - **Tree view with depth & top-N control** — zoom in only as far as you want
 - **Wildcard excludes** — skip `node_modules`, `*.iso`, whatever you like
 - **File-type breakdown** — see which extensions dominate (`--types`)
 - **JSON export** — pipe the results into your own tooling (`--json`)
+- **Unicode & long paths on Windows** — wide-character APIs, paths beyond 260 characters
 
 ## Build
 
@@ -38,10 +39,13 @@ Works on Windows (MinGW) and POSIX systems.
 dirwhale [options] [path]
 
   -d, --depth N      show children down to depth N (default 1)
-  -n, --top N        biggest N entries per level (default 15)
+  -n, --top N        biggest N entries per level (default 15);
+                     also limits the --types listing
   -e, --exclude PAT  skip wildcard pattern, may repeat
   -t, --types        show file-type breakdown
-  -j, --json FILE    also write results as JSON
+  -j, --json FILE    also write results as JSON (full tree)
+  -q, --quiet        no scan-progress on stderr
+  -V, --version      print version and exit
   -h, --help         show this help
 ```
 
@@ -59,16 +63,23 @@ dirwhale -j out.json C:/          # machine-readable output
 > `du` report *disk usage*, which counts allocated clusters — numbers will
 > differ slightly for many small files.
 >
-> Scan progress and errors go to **stderr**; the report itself goes to
-> stdout, so redirecting stdout gives you a clean report.
+> The report goes to **stdout**. Scan progress goes to stderr only when
+> stderr is a terminal (silence it with `-q`). Errors always go to stderr.
 >
-> Symlinks are never followed (no recursive scans, no double counting):
-> on POSIX a file symlink is counted by its own path length (like `du`),
-> on Windows a file symlink/junction shows the target's size.
+> Symlinks are never followed as children (no recursive scans, no double
+> counting). If you pass a directory symlink/junction as the *root*, it is
+> scanned. On POSIX a file symlink is counted by its own path length
+> (like `du`); on Windows a file symlink shows the target's size.
+> Child directory junctions on Windows are listed and not entered.
+>
+> `--json` writes the full scanned tree (sorted by size), even when
+> `-d`/`-n` truncate the text view. Without `--json`, entries that would
+> not be printed are dropped after each directory is summed, so a deep
+> disk scan stays small in RAM.
 >
 > Sizes use binary units (1 KiB = 1024 bytes). On Windows with MinGW,
 > `mingw32-make` produces `dirwhale.exe`; plain `gcc -O2 -o dirwhale
-> src/main.c` works everywhere.
+> src/main.c` works everywhere. `make test` runs `tests/run.py`.
 
 ## Why "dirwhale"?
 
