@@ -2,7 +2,7 @@
  * dirwhale — a tiny zero-dependency disk usage analyzer.
  *
  * Scans a directory tree, aggregates sizes, and shows which entries
- * eat the most space. Works on Windows (MinGW) and POSIX.
+ * eat the most space. Works on Windows (MinGW), macOS, and POSIX.
  *
  * Usage:
  *   dirwhale [options] [path]
@@ -53,6 +53,7 @@
 #  include <unistd.h>
 #  include <dirent.h>
 #  include <fcntl.h>
+#  include <strings.h>
 #  include <sys/stat.h>
 #  include <sys/types.h>
 #  define PATH_SEP '/'
@@ -68,7 +69,7 @@
 int _dowildcard = 0;
 #endif
 
-#define DIRWHALE_VERSION "0.2.0"
+#define DIRWHALE_VERSION "0.2.1"
 
 /* ------------------------------------------------------------------ */
 /* Data structures                                                     */
@@ -169,7 +170,7 @@ static void strvec_push(StrVec *v, const char *s) {
     v->items[v->len++] = xstrdup(s);
 }
 
-/* Wildcard match with * and ? (case-insensitive on Windows) */
+/* Wildcard match with * and ? (case-insensitive on Windows and macOS) */
 static int wc_match(const char *pat, const char *str) {
     while (*pat) {
         if (*pat == '*') {
@@ -182,7 +183,7 @@ static int wc_match(const char *pat, const char *str) {
         }
         if (!*str) return 0;
         char a = *pat, b = *str;
-#ifdef _WIN32
+#if defined(_WIN32) || defined(__APPLE__)
         a = (char)tolower((unsigned char)a);
         b = (char)tolower((unsigned char)b);
 #endif
@@ -225,8 +226,10 @@ static const char *path_ext(const char *name) {
 static void extvec_add(ExtVec *v, const char *name, uint64_t size) {
     const char *e = path_ext(name);
     for (size_t i = 0; i < v->len; i++) {
-#ifdef _WIN32
+#if defined(_WIN32)
         if (_stricmp(v->items[i].ext, e) == 0) {
+#elif defined(__APPLE__)
+        if (strcasecmp(v->items[i].ext, e) == 0) {
 #else
         if (strcmp(v->items[i].ext, e) == 0) {
 #endif

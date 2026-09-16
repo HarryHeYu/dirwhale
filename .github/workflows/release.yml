@@ -1,0 +1,87 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  darwin:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build universal binary
+        run: make universal
+      - name: Inspect
+        run: |
+          file dirwhale
+          lipo -info dirwhale
+          lipo -info dirwhale | grep -q 'x86_64'
+          lipo -info dirwhale | grep -q 'arm64'
+      - name: Test
+        run: python3 tests/run.py
+      - name: Rename
+        run: mv dirwhale dirwhale-darwin-universal
+      - uses: actions/upload-artifact@v4
+        with:
+          name: darwin
+          path: dirwhale-darwin-universal
+
+  linux:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build
+        run: make
+      - name: Test
+        run: python3 tests/run.py
+      - name: Rename
+        run: mv dirwhale dirwhale-linux-amd64
+      - uses: actions/upload-artifact@v4
+        with:
+          name: linux
+          path: dirwhale-linux-amd64
+
+  windows:
+    runs-on: windows-latest
+    defaults:
+      run:
+        shell: msys2 {0}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: msys2/setup-msys2@v2
+        with:
+          msystem: MINGW64
+          update: false
+          install: mingw-w64-x86_64-gcc make mingw-w64-x86_64-python
+      - name: Build
+        run: make
+      - name: Test
+        run: python tests/run.py
+      - name: Rename
+        run: mv dirwhale.exe dirwhale-windows-amd64.exe
+      - uses: actions/upload-artifact@v4
+        with:
+          name: windows
+          path: dirwhale-windows-amd64.exe
+
+  publish:
+    needs: [darwin, linux, windows]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: dist
+          merge-multiple: true
+      - name: Checksums
+        run: |
+          cd dist
+          sha256sum * > SHA256SUMS
+          ls -l
+      - uses: softprops/action-gh-release@v2
+        with:
+          generate_release_notes: true
+          files: dist/*

@@ -27,11 +27,30 @@ $ dirwhale -d 1 -n 5 ~/projects
 
 ## Build
 
+Works on macOS (Intel + Apple Silicon), Windows (MinGW), and Linux.
+
+### macOS
+
+```sh
+make universal                    # arm64 + x86_64, macOS 11+
+sudo make install                 # /usr/local/bin
+# Apple Silicon Homebrew prefix:
+#   sudo make install PREFIX=/opt/homebrew
+```
+
+A prebuilt universal binary is on [GitHub Releases](https://github.com/HarryHeYu/dirwhale/releases). After downloading:
+
+```sh
+chmod +x dirwhale-darwin-universal
+xattr -d com.apple.quarantine dirwhale-darwin-universal   # first run only
+mv dirwhale-darwin-universal /usr/local/bin/dirwhale
+```
+
+### Windows / Linux
+
 ```sh
 gcc -O2 -o dirwhale src/main.c     # or just: make
 ```
-
-Works on Windows (MinGW) and POSIX systems.
 
 ## Usage
 
@@ -53,6 +72,7 @@ Examples:
 
 ```sh
 dirwhale E:/                      # what's big at the top level of E:?
+dirwhale ~                        # home directory (macOS / Linux)
 dirwhale -d 2 -n 10 .             # two levels deep, top 10 per level
 dirwhale -e node_modules -e .git  # ignore common junk
 dirwhale -t ~/projects            # which file types eat the most?
@@ -78,8 +98,12 @@ dirwhale -j out.json C:/          # machine-readable output
 > disk scan stays small in RAM.
 >
 > Sizes use binary units (1 KiB = 1024 bytes). On Windows with MinGW,
-> `mingw32-make` produces `dirwhale.exe`; plain `gcc -O2 -o dirwhale
+> `mingw32-make` produces `dirwhale.exe`; on macOS `make universal`
+> produces a fat Intel+Apple-Silicon binary. Plain `cc -O2 -o dirwhale
 > src/main.c` works everywhere. `make test` runs `tests/run.py`.
+>
+> Exclude patterns and file-type names are case-insensitive on Windows
+> and macOS (the usual case-insensitive filesystems).
 
 ## Why "dirwhale"?
 

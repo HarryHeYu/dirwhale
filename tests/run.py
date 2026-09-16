@@ -57,7 +57,7 @@ def main() -> int:
 
     r = run(["--version"])
     check("version rc=0", r.returncode == 0, r.stderr)
-    check("version text", "dirwhale 0.2.0" in r.stdout, r.stdout)
+    check("version text", "dirwhale 0.2.1" in r.stdout, r.stdout)
 
     r = run(["-h"])
     check("help rc=0", r.returncode == 0)
@@ -163,6 +163,18 @@ def main() -> int:
                 check("junction no hang rc=0", r.returncode == 0)
             else:
                 print("  SKIP  junction (mklink failed — need privilege?)")
+        else:
+            link = tree / "symdir"
+            link.symlink_to(tree / "sub", target_is_directory=True)
+            r = run(["-q", "-d", "1", "-j", str(base / "sym.json"), str(tree)])
+            check("posix symlink scan rc=0", r.returncode == 0, r.stderr)
+            data = json.loads((base / "sym.json").read_text(encoding="utf-8"))
+            node = find_child(data, "symdir")
+            check(
+                "posix dir symlink not followed",
+                node is not None and node.get("is_dir") is False,
+                str(node),
+            )
 
     print(f"\n{PASS} passed, {FAIL} failed")
     return 1 if FAIL else 0
